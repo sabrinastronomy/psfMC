@@ -1,0 +1,20 @@
+Metadata-Version: 2.1
+Name: psfMC
+Version: 2.0b1
+Summary: Markov Chain Monte Carlo modeling of 2-dimensional surface brightness distributions of quasar host galaxies
+Home-page: https://github.com/mmechtley/psfMC
+Author: Mira Mechtley
+Author-email: matt@cherem.org
+License: BSD 2-clause
+Platform: UNKNOWN
+Requires: numpy
+Requires: scipy
+Requires: astropy
+Requires: emcee
+Requires: matplotlib
+Requires: corner
+Requires: six
+License-File: LICENSE.md
+
+UNKNOWN
+

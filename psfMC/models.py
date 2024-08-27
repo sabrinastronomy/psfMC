@@ -6,7 +6,7 @@ from .ModelComponents import Configuration, PointSource
 from .model_parser import component_list_from_file
 
 
-class MultiComponentModel(object):
+class MultiComponentModel():
     """
     A composite 2D surface brightness model defined from a list of individual
     image components (Sersics, etc.) and a Configuration component. These can
@@ -59,6 +59,9 @@ class MultiComponentModel(object):
         self.posterior_images = dict()
         self.accumulated_samples = 0
         self.reset_images()
+
+    # def __reduce__(self):
+    #     return (MultiComponentModel, (self.components,))
 
     def reset_images(self):
         obs_shape = self.config.obs_data.shape
@@ -190,57 +193,57 @@ class MultiComponentModel(object):
         """
         return np.sum([comp.log_priors() for comp in self.components])
 
-    @staticmethod
-    def log_posterior(param_values, **kwargs):
-        """
-        log-probability of the posterior distribution for a given set of
-        parameters. Note: because of how emcee calls this, the posterior
-        function is static. The MultiComponentModel object must be passed using
-        kwargs={'model': mc_model} in the Sampler constructor.
-
-        :param param_values: Vector of values for all stochastic parameters
-        :param kwargs: MUST include 'model' kwarg
-        :return: log-likelihood + joint log-prior probability
-        """
-        model = kwargs.pop('model')
-        model.param_values = param_values
-
-        # Calculate prior, and early out for unsupported prior values
-        log_priors = model.log_priors()
-        if not np.isfinite(log_priors):
-            return -np.inf, dict()
-
-        raw_px = model.raw_model()
-        conv_px = model.convolved_model(raw_px)
-        resid_px = model.residual(conv_px)
-        ivm_px = model.composite_ivm(raw_px)
-        ps_sub_px = model.point_source_subtracted()
-
-        # Save this evaluation's images as blobs for accumulation.
-        # Note: Accumulation must happen in the emcee.sample() loop, since any
-        # individual evaluation of log_posterior may be discarded.
-        sample_images = {'raw_model': raw_px,
-                         'convolved_model': conv_px,
-                         'residual': resid_px,
-                         'composite_ivm': ivm_px,
-                         'point_source_subtracted': ps_sub_px}
-
-        # This is Normal log-likelihood. Consider letting the user choose Normal
-        # or Poisson (or maybe others). However, just writing rather than using
-        # a distributions.Normal object makes this function about 20% faster
-        # TODO: We get positive log-likelihood sometimes, which I guess means
-        # the -log(0.5/pi*ivm) term dominates. Maybe errors overestimated?
-        ivm_flat = ivm_px[~model.config.bad_px]
-        resid_flat = resid_px[~model.config.bad_px]
-        log_likelihood = -0.5 * np.sum(resid_flat**2 * ivm_flat
-                                       - np.log(0.5 / np.pi * ivm_flat))
-
-        # FIXME: kinda a hack. log-likelihood is NaN sometimes, find out why
-        # This will just cause MCMC to reject the sample
-        if not np.isfinite(log_likelihood):
-            return -np.inf, sample_images
-
-        return log_likelihood + log_priors, sample_images
+    # @staticmethod
+    # def log_posterior(param_values, **kwargs):
+    #     """
+    #     log-probability of the posterior distribution for a given set of
+    #     parameters. Note: because of how emcee calls this, the posterior
+    #     function is static. The MultiComponentModel object must be passed using
+    #     kwargs={'model': mc_model} in the Sampler constructor.
+    #
+    #     :param param_values: Vector of values for all stochastic parameters
+    #     :param kwargs: MUST include 'model' kwarg
+    #     :return: log-likelihood + joint log-prior probability
+    #     """
+    #     model = kwargs.pop('model')
+    #     model.param_values = param_values
+    #
+    #     # Calculate prior, and early out for unsupported prior values
+    #     log_priors = model.log_priors()
+    #     if not np.isfinite(log_priors):
+    #         return -np.inf, dict()
+    #
+    #     raw_px = model.raw_model()
+    #     conv_px = model.convolved_model(raw_px)
+    #     resid_px = model.residual(conv_px)
+    #     ivm_px = model.composite_ivm(raw_px)
+    #     ps_sub_px = model.point_source_subtracted()
+    #
+    #     # Save this evaluation's images as blobs for accumulation.
+    #     # Note: Accumulation must happen in the emcee.sample() loop, since any
+    #     # individual evaluation of log_posterior may be discarded.
+    #     sample_images = {'raw_model': raw_px,
+    #                      'convolved_model': conv_px,
+    #                      'residual': resid_px,
+    #                      'composite_ivm': ivm_px,
+    #                      'point_source_subtracted': ps_sub_px}
+    #
+    #     # This is Normal log-likelihood. Consider letting the user choose Normal
+    #     # or Poisson (or maybe others). However, just writing rather than using
+    #     # a distributions.Normal object makes this function about 20% faster
+    #     # TODO: We get positive log-likelihood sometimes, which I guess means
+    #     # the -log(0.5/pi*ivm) term dominates. Maybe errors overestimated?
+    #     ivm_flat = ivm_px[~model.config.bad_px]
+    #     resid_flat = resid_px[~model.config.bad_px]
+    #     log_likelihood = -0.5 * np.sum(resid_flat**2 * ivm_flat
+    #                                    - np.log(0.5 / np.pi * ivm_flat))
+    #
+    #     # FIXME: kinda a hack. log-likelihood is NaN sometimes, find out why
+    #     # This will just cause MCMC to reject the sample
+    #     if not np.isfinite(log_likelihood):
+    #         return -np.inf, sample_images
+    #
+    #     return log_likelihood + log_priors, sample_images
 
     def raw_model(self):
         """
