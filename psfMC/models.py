@@ -5,7 +5,6 @@ from .utils import convolve
 from .ModelComponents import Configuration, PointSource
 from .model_parser import component_list_from_file
 
-
 class MultiComponentModel():
     """
     A composite 2D surface brightness model defined from a list of individual
