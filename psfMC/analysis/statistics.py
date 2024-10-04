@@ -131,7 +131,7 @@ def check_convergence_psrf(model, chains=None, stochastics=None, psrf_tol=0.05,
     return all([is_converged(stoch) for stoch in stochastics])
 
 
-def check_convergence_autocorr(sampler, min_chain_to_tau_ratio=10, verbose=0):
+def check_convergence_autocorr(sampler, min_chain_to_tau_ratio=10, verbose=1):
     """
     Use integrated autocorrelation time to estimate whether the chain is
     converged / whether samples are representative
@@ -143,6 +143,8 @@ def check_convergence_autocorr(sampler, min_chain_to_tau_ratio=10, verbose=0):
     # Use dirty imprecise estimation of autocorrelation time by specifying c=1
     try:
         acorr = sampler.get_autocorr_time(c=1)
+        print("acorr", acorr)
+
     except AutocorrError:
         warn('emcee was unable to estimate the autocorrelation time, assuming '
              'chain is not converged')

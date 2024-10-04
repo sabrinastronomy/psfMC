@@ -166,6 +166,8 @@ def model_galaxy_mcmc(model_file, output_name=None,
             print('Database already contains sampled chains, skipping sampling')
             database = load_database(db_name)
         end = time.time()
+    print("multipooling took")
+    print(end-start)
 
     # start = time.time()
     #
